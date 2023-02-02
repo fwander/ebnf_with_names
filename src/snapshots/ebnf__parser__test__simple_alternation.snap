@@ -6,13 +6,21 @@ expression: result
 - - lhs: filter
     rhs:
       Symbol:
-        - Terminal: a
+        - Terminal:
+            - a
+            - ""
         - Alternation
-        - Terminal: b
+        - Terminal:
+            - b
+            - ""
   - lhs: a
     rhs:
-      String: a
+      String:
+        - a
+        - ""
   - lhs: b
     rhs:
-      String: b
+      String:
+        - b
+        - ""
 

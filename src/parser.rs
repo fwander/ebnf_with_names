@@ -1,11 +1,12 @@
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until},
-    character::complete,
+    character::{complete::{self, alphanumeric0}, streaming::{alphanumeric1, char}},
     error::{VerboseError, VerboseErrorKind},
     multi::many1,
     sequence::{delimited, preceded, terminated},
     Err, IResult,
+    combinator::{opt, recognize, all_consuming},
 };
 
 use parse_hyperlinks::take_until_unbalanced;
@@ -16,6 +17,7 @@ use crate::{
 };
 
 type Res<T, U> = IResult<T, U, VerboseError<T>>;
+
 
 fn parse_lhs(input: &str) -> Res<&str, String> {
     let (input, lhs) = preceded(
@@ -42,8 +44,9 @@ fn parse_string(input: &str) -> Res<&str, Node> {
         delimited(complete::char('\''), take_until("'"), complete::char('\'')),
         delimited(complete::char('"'), take_until("\""), complete::char('"')),
     ))(input)?;
+    let (input, tag) = parse_tag(input)?;
 
-    Ok((input, Node::String(string.to_string())))
+    Ok((input, Node::String(string.to_string(),tag.to_string())))
 }
 
 fn parse_regex_string(input: &str) -> Res<&str, Node> {
@@ -51,8 +54,9 @@ fn parse_regex_string(input: &str) -> Res<&str, Node> {
         delimited(tag("#'"), take_until("'"), complete::char('\'')),
         delimited(tag("#\""), take_until("\""), complete::char('"')),
     ))(input)?;
+    let (input, tag) = parse_tag(input)?;
 
-    Ok((input, Node::RegexString(string.to_string())))
+    Ok((input, Node::RegexString(string.to_string(), tag.to_string())))
 }
 
 fn parse_terminal(input: &str) -> Res<&str, Node> {
@@ -60,9 +64,10 @@ fn parse_terminal(input: &str) -> Res<&str, Node> {
         complete::multispace0,
         terminated(many1(alt((complete::alphanumeric1,tag("_")))), complete::multispace0),
     )(input)?;
+    let (input, tag) = parse_tag(input)?;
 
 
-    Ok((input, Node::Terminal(symbol.join(""))))
+    Ok((input, Node::Terminal(symbol.join(""),tag.to_string())))
 }
 
 fn parse_multiple(input: &str) -> Res<&str, Node> {
@@ -92,7 +97,9 @@ fn parse_node(input: &str) -> Res<&str, Node> {
     match optional_regex_ext {
         Ok(((s, regex_ext_kind))) => {
             input = s;
-            left_node = Node::RegexExt(Box::new(left_node), regex_ext_kind);
+            let (input_new, tag) = parse_tag(input)?;
+            input = input_new;
+            left_node = Node::RegexExt(Box::new(left_node), regex_ext_kind, tag.to_string());
         }
         Err(_) => {}
     }
@@ -171,25 +178,34 @@ fn parse_delimited_node(
     }
 }
 
+fn parse_tag(input: &str) -> Res<&str, &str> {
+    let (input, name) =  opt(preceded(complete::multispace0,delimited(tag("<"), alphanumeric0, tag(">"))))(input)?;
+    Ok((input, name.unwrap_or("")))
+}
+
 fn parse_group(input: &str) -> Res<&str, Node> {
     let (input, inner) = parse_delimited_node(input, '(', ')')?;
     let (_, node) = preceded(complete::multispace0, parse_multiple)(inner)?;
+    let (input, tag) = parse_tag(input)?;
 
-    Ok((input, Node::Group(Box::new(node))))
+    Ok((input, Node::Group(Box::new(node),tag.to_string())))
 }
 
 fn parse_optional(input: &str) -> Res<&str, Node> {
     let (input, inner) = parse_delimited_node(input, '[', ']')?;
     let (_, node) = preceded(complete::multispace0, parse_multiple)(inner)?;
+    let (input, tag) = parse_tag(input)?;
 
-    Ok((input, Node::Optional(Box::new(node))))
+
+    Ok((input, Node::Optional(Box::new(node),tag.to_string())))
 }
 
 fn parse_repeat(input: &str) -> Res<&str, Node> {
     let (input, inner) = parse_delimited_node(input, '{', '}')?;
     let (_, node) = preceded(complete::multispace0, parse_multiple)(inner)?;
+    let (input, tag) = parse_tag(input)?;
 
-    Ok((input, Node::Repeat(Box::new(node))))
+    Ok((input, Node::Repeat(Box::new(node),tag.to_string())))
 }
 
 pub(crate) fn parse_expressions(input: &str) -> Res<&str, Vec<Expression>> {
@@ -262,6 +278,42 @@ mod test {
      let source = r"
          filter ::= a_b_cat;
          a_b_cat ::= 'a' | 'b';
+     ";
+     let result = parse_expressions(source).unwrap();
+     assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn annotate() {
+     let source = r"
+         filter ::= a_b_cat <name>;
+         a_b_cat ::= 'a' <0> | 'b' <1>;
+     ";
+     let result = parse_expressions(source).unwrap();
+     assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn annotate_list() {
+     let source = r"
+         filter ::= a_b_cat+ <name>;
+         a_b_cat ::= 'a' <0> | 'b' <1>;
+     ";
+     let result = parse_expressions(source).unwrap();
+     assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn annotate_list_nested() {
+     let source = r"
+         filter ::= (a_b_cat 'tag' <nameInner> )+ <name>;
+         a_b_cat ::= 'a' <0> | 'b' <1>;
+     ";
+     let result = parse_expressions(source).unwrap();
+     assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn annotate_list_nested_group() {
+     let source = r"
+         filter ::= (a_b_cat ('tag') <nameInner> )+ <name>;
+         a_b_cat ::= 'a' <0> | 'b' <1>;
      ";
      let result = parse_expressions(source).unwrap();
      assert_yaml_snapshot!(result)

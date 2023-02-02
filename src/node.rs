@@ -2,15 +2,15 @@ use serde::{Serialize};
 
 #[derive(Debug, Clone, Serialize)]
 pub enum Node {
-    String(String),
-    RegexString(String),
-    Terminal(String),
+    String(String, String),
+    RegexString(String, String),
+    Terminal(String, String),
     Multiple(Vec<Node>),
-    RegexExt(Box<Node>, RegexExtKind),
+    RegexExt(Box<Node>, RegexExtKind, String),
     Symbol(Box<Node>, SymbolKind, Box<Node>),
-    Group(Box<Node>),
-    Optional(Box<Node>),
-    Repeat(Box<Node>),
+    Group(Box<Node>, String),
+    Optional(Box<Node>, String),
+    Repeat(Box<Node>, String),
     Unknown,
 }
 

@@ -4,7 +4,6 @@ version = "0.1.2"
 edition = "2021"
 license = "MIT"
 description = "A successor bnf parsing library of bnf parsing library, for parsing Extended Backus–Naur form context-free grammars"
-repository = "https://github.com/ChAoSUnItY/ebnf"
 readme = "README.md"
 keywords = ["ebnf", "bnf"]
 
