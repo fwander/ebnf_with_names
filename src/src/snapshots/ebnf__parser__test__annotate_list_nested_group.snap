@@ -1,0 +1,32 @@
+---
+source: src/parser.rs
+expression: result
+---
+- "\n         filter ::= (a_b_cat ('tag') <nameInner> )+ <name>;\n         a_b_cat ::= 'a' <0> | 'b' <1>;\n     "
+- - lhs: filter
+    rhs:
+      RegexExt:
+        - Group:
+            - Multiple:
+                - Terminal:
+                    - a_b_cat
+                    - ""
+                - Group:
+                    - String:
+                        - tag
+                        - ""
+                    - nameInner
+            - ""
+        - Repeat1
+        - name
+  - lhs: a_b_cat
+    rhs:
+      Symbol:
+        - String:
+            - a
+            - "0"
+        - Alternation
+        - String:
+            - b
+            - "1"
+
