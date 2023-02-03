@@ -3,6 +3,7 @@ name = "ebnf"
 version = "0.1.2"
 edition = "2021"
 license = "MIT"
+repository = "https://github.com/fwander/ebnf_with_names"
 description = "A successor bnf parsing library of bnf parsing library, for parsing Extended Backus–Naur form context-free grammars"
 readme = "README.md"
 keywords = ["ebnf", "bnf"]
