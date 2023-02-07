@@ -59,6 +59,15 @@ fn parse_regex_string(input: &str) -> Res<&str, Node> {
     Ok((input, Node::RegexString(string.to_string(), tag.to_string())))
 }
 
+fn parse_new_line(input: &str) -> Res<&str, Node> {
+    let (input, symbol) = preceded(
+        complete::multispace0,
+        preceded(tag("\\"),complete::alphanumeric1)
+    )(input)?;
+
+    Ok((input, Node::Fmt(symbol.to_string())))
+}
+
 fn parse_terminal(input: &str) -> Res<&str, Node> {
     let (input, symbol) = preceded(
         complete::multispace0,
@@ -89,6 +98,7 @@ fn parse_node(input: &str) -> Res<&str, Node> {
             parse_string,
             parse_regex_string,
             parse_terminal,
+            parse_new_line,
         )),
     )(input)?;
 
@@ -145,13 +155,13 @@ fn parse_symbol(input: &str) -> Res<&str, (SymbolKind, Node)> {
 }
 
 fn parse_concatenation(input: &str) -> Res<&str, (SymbolKind, Node)> {
-    let (input, node) = preceded(complete::char(','), parse_multiple)(input)?;
+    let (input, node) = preceded(complete::char(','), parse_node)(input)?;
 
     Ok((input, (SymbolKind::Concatenation, node)))
 }
 
 fn parse_alternation(input: &str) -> Res<&str, (SymbolKind, Node)> {
-    let (input, node) = preceded(complete::char('|'), parse_multiple)(input)?;
+    let (input, node) = preceded(complete::char('|'), parse_node)(input)?;
 
     Ok((input, (SymbolKind::Alternation, node)))
 }
@@ -314,6 +324,22 @@ mod test {
      let source = r"
          filter ::= (a_b_cat ('tag') <nameInner> )+ <name>;
          a_b_cat ::= 'a' <0> | 'b' <1>;
+     ";
+     let result = parse_expressions(source).unwrap();
+     assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn fmt_n() {
+     let source = r"
+         filter ::= 'a:' \n 'b:';
+     ";
+     let result = parse_expressions(source).unwrap();
+     assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn alternation_precidence() {
+     let source = r"
+         filter ::= 'a' | 'b' 'c';
      ";
      let result = parse_expressions(source).unwrap();
      assert_yaml_snapshot!(result)

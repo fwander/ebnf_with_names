@@ -11,6 +11,7 @@ pub enum Node {
     Group(Box<Node>, String),
     Optional(Box<Node>, String),
     Repeat(Box<Node>, String),
+    Fmt(String),
     Unknown,
 }
 
