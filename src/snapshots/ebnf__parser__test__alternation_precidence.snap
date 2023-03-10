@@ -6,15 +6,16 @@ expression: result
 - - lhs: filter
     rhs:
       Multiple:
-        - Symbol:
-            - String:
-                - a
-                - ""
-            - Alternation
-            - String:
-                - b
-                - ""
-        - String:
-            - c
-            - ""
+        - - Alternation:
+              - Terminal:
+                  - a
+                  - name: ""
+              - Terminal:
+                  - b
+                  - name: ""
+              - name: ""
+          - Terminal:
+              - c
+              - name: ""
+        - name: ""
 

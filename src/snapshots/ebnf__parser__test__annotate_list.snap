@@ -6,19 +6,19 @@ expression: result
 - - lhs: filter
     rhs:
       RegexExt:
-        - Terminal:
+        - NonTerminal:
             - a_b_cat
-            - ""
+            - name: ""
         - Repeat1
-        - name
+        - name: name
   - lhs: a_b_cat
     rhs:
-      Symbol:
-        - String:
+      Alternation:
+        - Terminal:
             - a
-            - "0"
-        - Alternation
-        - String:
+            - name: "0"
+        - Terminal:
             - b
-            - "1"
+            - name: "1"
+        - name: ""
 

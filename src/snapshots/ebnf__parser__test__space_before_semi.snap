@@ -5,22 +5,22 @@ expression: result
 - "\n         filter ::= a | b ;\n         a ::= 'a';\n         b ::= 'b';\n     "
 - - lhs: filter
     rhs:
-      Symbol:
-        - Terminal:
+      Alternation:
+        - NonTerminal:
             - a
-            - ""
-        - Alternation
-        - Terminal:
+            - name: ""
+        - NonTerminal:
             - b
-            - ""
+            - name: ""
+        - name: ""
   - lhs: a
     rhs:
-      String:
+      Terminal:
         - a
-        - ""
+        - name: ""
   - lhs: b
     rhs:
-      String:
+      Terminal:
         - b
-        - ""
+        - name: ""
 

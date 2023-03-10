@@ -8,23 +8,24 @@ expression: result
       RegexExt:
         - Group:
             - Multiple:
-                - Terminal:
-                    - a_b_cat
-                    - ""
-                - String:
-                    - tag
-                    - nameInner
-            - ""
+                - - NonTerminal:
+                      - a_b_cat
+                      - name: ""
+                  - Terminal:
+                      - tag
+                      - name: nameInner
+                - name: ""
+            - name: ""
         - Repeat1
-        - name
+        - name: name
   - lhs: a_b_cat
     rhs:
-      Symbol:
-        - String:
+      Alternation:
+        - Terminal:
             - a
-            - "0"
-        - Alternation
-        - String:
+            - name: "0"
+        - Terminal:
             - b
-            - "1"
+            - name: "1"
+        - name: ""
 

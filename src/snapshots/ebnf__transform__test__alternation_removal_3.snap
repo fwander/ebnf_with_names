@@ -1,0 +1,21 @@
+---
+source: src/transform.rs
+expression: result
+---
+expressions:
+  - lhs: A
+    rhs:
+      NonTerminal:
+        - a
+        - name: ""
+  - lhs: A
+    rhs:
+      NonTerminal:
+        - b
+        - name: ""
+  - lhs: A
+    rhs:
+      NonTerminal:
+        - c
+        - name: ""
+

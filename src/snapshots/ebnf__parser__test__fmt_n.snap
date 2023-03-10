@@ -6,11 +6,12 @@ expression: result
 - - lhs: filter
     rhs:
       Multiple:
-        - String:
-            - "a:"
-            - ""
-        - Fmt: n
-        - String:
-            - "b:"
-            - ""
+        - - Terminal:
+              - "a:"
+              - name: ""
+          - Fmt: n
+          - Terminal:
+              - "b:"
+              - name: ""
+        - name: ""
 

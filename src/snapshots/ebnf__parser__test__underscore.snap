@@ -5,17 +5,17 @@ expression: result
 - "\n         filter ::= a_b;\n         a_b ::= 'a' | 'b';\n     "
 - - lhs: filter
     rhs:
-      Terminal:
+      NonTerminal:
         - a_b
-        - ""
+        - name: ""
   - lhs: a_b
     rhs:
-      Symbol:
-        - String:
+      Alternation:
+        - Terminal:
             - a
-            - ""
-        - Alternation
-        - String:
+            - name: ""
+        - Terminal:
             - b
-            - ""
+            - name: ""
+        - name: ""
 

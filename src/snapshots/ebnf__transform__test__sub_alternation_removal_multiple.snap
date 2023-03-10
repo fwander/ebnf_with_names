@@ -1,0 +1,26 @@
+---
+source: src/transform.rs
+expression: result
+---
+expressions:
+  - lhs: ~0
+    rhs:
+      NonTerminal:
+        - B
+        - name: ""
+  - lhs: ~0
+    rhs:
+      NonTerminal:
+        - c
+        - name: ""
+  - lhs: A
+    rhs:
+      Multiple:
+        - NonTerminal:
+            - A
+            - name: ""
+        - NonTerminal:
+            - ~0
+            - name: ~
+        - name: ""
+
