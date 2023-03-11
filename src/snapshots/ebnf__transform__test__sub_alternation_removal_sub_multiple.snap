@@ -6,21 +6,16 @@ expressions:
   - lhs: A
     rhs:
       NonTerminal:
-        - ~0
+        - B
         - name: ""
-  - lhs: ~0
+  - lhs: A
     rhs:
       Multiple:
         - - NonTerminal:
-              - A
+              - C
               - name: ""
           - NonTerminal:
-              - ~0
+              - D
               - name: ""
-        - name: ~
-  - lhs: ~0
-    rhs:
-      NonTerminal:
-        - A
         - name: ""
 

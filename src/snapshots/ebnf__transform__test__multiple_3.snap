@@ -3,24 +3,17 @@ source: src/transform.rs
 expression: result
 ---
 expressions:
-  - lhs: ~0
-    rhs:
-      Multiple:
-        - NonTerminal:
-            - B
-            - name: ""
-        - NonTerminal:
-            - C
-            - name: ""
-        - name: ""
   - lhs: A
     rhs:
       Multiple:
-        - NonTerminal:
-            - A
-            - name: ""
-        - NonTerminal:
-            - ~0
-            - name: ~
-        - name: ~
+        - - NonTerminal:
+              - A
+              - name: ""
+          - NonTerminal:
+              - B
+              - name: ""
+          - NonTerminal:
+              - C
+              - name: ""
+        - name: ""
 

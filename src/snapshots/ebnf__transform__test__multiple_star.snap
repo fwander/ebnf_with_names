@@ -8,19 +8,26 @@ expressions:
       NonTerminal:
         - ~0
         - name: ""
+  - lhs: ~1
+    rhs:
+      Multiple:
+        - - NonTerminal:
+              - B
+              - name: ""
+          - NonTerminal:
+              - C
+              - name: ""
+        - name: ""
   - lhs: ~0
     rhs:
       Multiple:
         - - NonTerminal:
-              - A
-              - name: ""
+              - ~1
+              - name: ~
           - NonTerminal:
               - ~0
               - name: ""
         - name: ~
   - lhs: ~0
-    rhs:
-      NonTerminal:
-        - A
-        - name: ""
+    rhs: Epsilon
 

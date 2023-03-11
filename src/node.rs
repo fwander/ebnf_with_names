@@ -5,7 +5,7 @@ pub enum NFNode {
     Terminal(String, Annotation),
     RegexString(String, Annotation),
     NonTerminal(String, Annotation),
-    Multiple(Box<NFNode>, Box<NFNode>, Annotation),
+    Multiple(Vec<EBNFNode>, Annotation),
     Fmt(String),
     Epsilon,
     Unknown,

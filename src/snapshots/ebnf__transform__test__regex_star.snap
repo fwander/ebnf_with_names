@@ -11,12 +11,12 @@ expressions:
   - lhs: ~0
     rhs:
       Multiple:
-        - NonTerminal:
-            - A
-            - name: ""
-        - NonTerminal:
-            - ~0
-            - name: ""
+        - - NonTerminal:
+              - A
+              - name: ""
+          - NonTerminal:
+              - ~0
+              - name: ""
         - name: ~
   - lhs: ~0
     rhs: Epsilon

@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::{Annotation, EBNFNode, Expression, Grammar, NFNode, RegexExtKind};
 
 fn to_nf_grammar(input: Grammar<EBNFNode>) -> Grammar<NFNode> {
@@ -35,11 +37,7 @@ fn to_nf_rule(rule: Expression<EBNFNode>) -> Expression<NFNode> {
 fn to_nf_node(node: EBNFNode) -> NFNode {
     match node {
         EBNFNode::Fmt(a) => NFNode::Fmt(a),
-        EBNFNode::Multiple(a, b) => NFNode::Multiple(
-            Box::new(to_nf_node(a[0].to_owned())),
-            Box::new(to_nf_node(a[1].to_owned())),
-            b,
-        ),
+        EBNFNode::Multiple(a, b) => NFNode::Multiple( a,b),
         EBNFNode::NonTerminal(a, b) => NFNode::NonTerminal(a, b),
         EBNFNode::RegexString(a, b) => NFNode::RegexString(a, b),
         EBNFNode::Terminal(a, b) => NFNode::Terminal(a, b),
@@ -62,91 +60,37 @@ fn expand_rule(
         | EBNFNode::Epsilon => {
             new_exprs.push(rule);
         }
-        EBNFNode::Multiple(vec, annotation) => {
+        EBNFNode::Multiple(mut vec, annotation) => {
             if vec.len() == 0 {
-                todo!();
+                unimplemented!();
             } else if vec.len() == 1 {
                 new_exprs.push(Expression {
                     lhs: rule.lhs.to_owned(),
                     rhs: vec[0].to_owned(),
                 });
                 any = true;
-            } else if vec.len() == 2 {
-                let mut was_term = false;
-                match &vec[0] {
-                    EBNFNode::NonTerminal(_, _) => {}
-                    _ => {
-                        let new_nonterm = format!("~{}", uniqueifier);
-                        *uniqueifier = *uniqueifier + 1;
-                        new_exprs.push(Expression {
-                            lhs: new_nonterm.to_owned(),
-                            rhs: vec[0].to_owned(),
-                        });
-                        new_exprs.push(Expression {
-                            lhs: rule.lhs.to_owned(),
-                            rhs: EBNFNode::Multiple(
-                                vec![
-                                    EBNFNode::NonTerminal(new_nonterm, Annotation { name: None }),
-                                    vec[1].to_owned(),
-                                ],
-                                annotation.to_owned(),
-                            ),
-                        });
-                        was_term = true;
-                    }
-                }
-
-                if !was_term { //first element of two was not a terminal
-                    match &vec[1] {
+            } else {
+                for i in 0..vec.len() {
+                    match vec[i] {
                         EBNFNode::NonTerminal(_, _) => {}
                         _ => {
+                            any = true;
                             let new_nonterm = format!("~{}", uniqueifier);
                             *uniqueifier = *uniqueifier + 1;
+                            vec.push(EBNFNode::NonTerminal(new_nonterm.clone(), annotation.clone()));
                             new_exprs.push(Expression {
                                 lhs: new_nonterm.to_owned(),
-                                rhs: vec[1].to_owned(),
+                                rhs: vec.swap_remove(i),
                             });
-                            new_exprs.push(Expression {
-                                lhs: rule.lhs.to_owned(),
-                                rhs: EBNFNode::Multiple(
-                                    vec![
-                                        vec[0].to_owned(),
-                                        EBNFNode::NonTerminal(
-                                            new_nonterm,
-                                            Annotation { name: None },
-                                        ),
-                                    ],
-                                    annotation.to_owned(),
-                                ),
-                            });
-                            was_term = true;
                         }
                     }
                 }
-
-                if was_term {
-                    any = was_term;
-                } else {
-                    new_exprs.push(Expression {
-                        lhs: rule.lhs.to_owned(),
-                        rhs: EBNFNode::Multiple(vec, annotation),
-                    });
-                }
-            } else { // list has more than 2 elements, we need to reduce
-                any = true;
-                // E <- A B C...
-                // E <- A [K]
-                // [K] <- B C...
-                let new_vec = vec[1..].to_vec();
-                let new_nonterm = format!("~{}", uniqueifier);
-                *uniqueifier = *uniqueifier + 1;
-                new_exprs.push(Expression {
-                    lhs: new_nonterm.to_owned(),
-                    rhs: EBNFNode::Multiple(new_vec, annotation.clone()),
-                });
                 new_exprs.push(Expression {
                     lhs: rule.lhs.to_owned(),
-                    rhs: EBNFNode::Multiple((&[vec[0].to_owned(),EBNFNode::NonTerminal(new_nonterm.to_owned(), Annotation {name : None})]).to_vec(), Annotation { name: None }),
+                    rhs: EBNFNode::Multiple(
+                        vec,
+                        annotation.clone(),
+                    ),
                 });
             }
         }
@@ -389,6 +333,54 @@ mod test {
     fn sub_alternation_removal_multiple_2() {
         let source = r"
          A ::= A B (B | c);
+     ";
+        let result = to_nf_grammar(get_grammar(source).unwrap());
+        assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn sub_sub_alternation_removal() {
+        let source = r"
+         A ::= B | (C | (D | E));
+     ";
+        let result = to_nf_grammar(get_grammar(source).unwrap());
+        assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn sub_alternation_removal_sub_multiple() {
+        let source = r"
+         A ::= B | (C D);
+     ";
+        let result = to_nf_grammar(get_grammar(source).unwrap());
+        assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn sub_alternation_removal_sub_multiple_outer_multiple() {
+        let source = r"
+         A ::= (B | (C D)) E;
+     ";
+        let result = to_nf_grammar(get_grammar(source).unwrap());
+        assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn alternation_star() {
+        let source = r"
+         A ::= (B | C)*;
+     ";
+        let result = to_nf_grammar(get_grammar(source).unwrap());
+        assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn alternation_star_multiple() {
+        let source = r"
+         A ::= (B | C)* D;
+     ";
+        let result = to_nf_grammar(get_grammar(source).unwrap());
+        assert_yaml_snapshot!(result)
+    }
+    #[test]
+    fn multiple_star() {
+        let source = r"
+         A ::= (B C)*;
      ";
         let result = to_nf_grammar(get_grammar(source).unwrap());
         assert_yaml_snapshot!(result)

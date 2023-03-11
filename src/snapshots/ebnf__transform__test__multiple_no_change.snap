@@ -6,11 +6,11 @@ expressions:
   - lhs: A
     rhs:
       Multiple:
-        - NonTerminal:
-            - A
-            - name: ""
-        - NonTerminal:
-            - B
-            - name: ""
+        - - NonTerminal:
+              - A
+              - name: ""
+          - NonTerminal:
+              - B
+              - name: ""
         - name: ""
 
