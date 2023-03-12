@@ -279,10 +279,23 @@ mod test {
     #[test]
     fn test_parse() {
         let src = r"
-            Filter ::= ( First ' ' )? ( Number '~ ' )? ( Number '-' Number ) ( ' ' Number '~' )? ( ' Hz' )? ( ' B' )? ( ' I' )? ( ' A' )?;
+            Filter ::= ( First SPACE )? ( Number '~ ' )? ( Number '-' Number ) ( ' ' Number '~' )? ( ' Hz' )? ( ' B' )? ( ' I' )? ( ' A' )?;
             First  ::= #'[A-Za-z][A-Za-z0-9_+]*';
-            Number ::= Digits ( ( '.' | ',' ) Digits? )?;
-            Digits ::= #'[0-9]+';
+            Number ::= Digits ( K Digits? )?;
+            Digits ::= (#'[0-9]+' | 'm') <Digit>;
+            SPACE ::= ' ';
+
+            TOK1 -> #'[0-9]+'
+            TOK2 -> 'm'
+
+            K ::= J | L
+
+            abcd[ID] abcdf[ID] if[KEYWORD, ID]
+
+            K => #'\.|,'
+            J ::= ','
+            L ::= '.'
+            .[L, K] ,[J, K] .[L, K]
         ";
 
         let (input, vec) = parse_expressions(src).unwrap();

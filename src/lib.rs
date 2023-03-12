@@ -41,6 +41,7 @@ mod expression;
 mod grammar;
 mod node;
 mod parser;
+mod token;
 mod transform;
 pub use expression::Expression;
 pub use grammar::Grammar;
@@ -51,7 +52,10 @@ pub fn get_grammar(
     input: &str,
 ) -> Result<Grammar<EBNFNode>, nom::Err<nom::error::VerboseError<&str>>> {
     match parser::parse_expressions(input) {
-        Ok((_, expressions)) => Ok(Grammar { expressions }),
+        Ok((_, expressions)) => Ok(Grammar {
+            expressions,
+            tokens: Vec::new(),
+        }),
         Err(e) => Err(e),
     }
 }
