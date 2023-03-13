@@ -3,23 +3,23 @@ use serde::Serialize;
 
 
 #[derive(Debug, Clone, Serialize)]
-pub enum NFNode<'a> {
-    Terminal(&'a Token, Annotation),
+pub enum NFNode {
+    Terminal(Token, Annotation),
     NonTerminal(String, Annotation),
-    Multiple(Vec<NFNode<'a>>, Annotation),
+    Multiple(Vec<NFNode>, Annotation),
     Fmt(String),
     Epsilon,
     Unknown,
 }
 
-impl NFNode<'_> {
-    pub fn order<'a>(node: &'a NFNode<'a>) -> Vec<&'a NFNode<'a>> {
+impl NFNode {
+    pub fn order(node: &NFNode) -> Vec<&NFNode> {
         let mut result = Vec::new();
         Self::dfs(node, &mut result);
         result
     }
 
-    fn dfs<'a>(node: &'a NFNode<'a>, result: &mut Vec<&'a NFNode<'a>>) {
+    fn dfs<'a>(node: &'a NFNode, result: &mut Vec<&'a NFNode>) {
         result.push(node);
         match node {
             NFNode::Terminal(_, _) => {}
@@ -38,26 +38,26 @@ impl NFNode<'_> {
 
 
 #[derive(Debug, Clone, Serialize)]
-pub enum EBNFTokenNode<'a> {
-    Terminal(&'a Token, Annotation),
+pub enum EBNFTokenNode {
+    Terminal(Token, Annotation),
     NonTerminal(String, Annotation),
-    Multiple(Vec<EBNFTokenNode<'a>>, Annotation),
-    RegexExt(Box<EBNFTokenNode<'a>>, RegexExtKind, Annotation),
-    Alternation(Box<EBNFTokenNode<'a>>, Box<EBNFTokenNode<'a>>, Annotation),
-    Group(Box<EBNFTokenNode<'a>>, Annotation),
+    Multiple(Vec<EBNFTokenNode>, Annotation),
+    RegexExt(Box<EBNFTokenNode>, RegexExtKind, Annotation),
+    Alternation(Box<EBNFTokenNode>, Box<EBNFTokenNode>, Annotation),
+    Group(Box<EBNFTokenNode>, Annotation),
     Epsilon,
     Fmt(String),
     Unknown,
 }
 
-impl EBNFTokenNode<'_> {
-    pub fn order<'a>(node: &'a EBNFTokenNode<'a>) -> Vec<&'a EBNFTokenNode<'a>> {
+impl EBNFTokenNode {
+    pub fn order(node: &EBNFTokenNode) -> Vec<&EBNFTokenNode> {
         let mut result = Vec::new();
         Self::dfs(node, &mut result);
         result
     }
 
-    fn dfs<'a>(node: &'a EBNFTokenNode<'a>, result: &mut Vec<&'a EBNFTokenNode<'a>>) {
+    fn dfs<'a>(node: &'a EBNFTokenNode, result: &mut Vec<&'a EBNFTokenNode>) {
         result.push(node);
             match node {
                 EBNFTokenNode::Alternation(a, b, _) => {
@@ -97,6 +97,39 @@ pub enum EBNFNode {
 }
 
 impl EBNFNode {
+    pub fn walk<F>(&mut self, down: Option<F>, up: Option<F>) -> &mut EBNFNode
+    where F: Fn(&mut EBNFNode) -> &mut EBNFNode + Copy
+    {
+        if let Some(d) = down{
+            d(self);
+        }
+        match self {
+            EBNFNode::Alternation(a, b, _) => {
+                a.walk(down, up);
+                b.walk(down, up);
+            }
+            EBNFNode::Multiple(a, _) => {
+                for k in a {
+                    k.walk(down, up);
+                }
+            }
+            EBNFNode::Group(a, _) => 
+                {
+                a.walk(down, up);
+                },
+            EBNFNode::RegexExt(a, _, _) => 
+                {
+                a.walk(down, up);
+                },
+            _ => (),
+            }
+        if let Some(u) = up{
+            u(self)
+        }
+        else {
+            self
+        }
+    }
     pub fn order(node: & EBNFNode) -> Vec<& EBNFNode> {
         let mut result = Vec::new();
         Self::dfs(node, &mut result);

@@ -43,6 +43,9 @@ mod node;
 mod parser;
 mod token;
 mod transform;
+
+use std::collections::HashSet;
+
 pub use expression::Expression;
 pub use grammar::Grammar;
 pub use node::{Annotation, EBNFNode, NFNode, RegexExtKind};
@@ -54,7 +57,6 @@ pub fn get_grammar(
     match parser::parse_expressions(input) {
         Ok((_, expressions)) => Ok(Grammar {
             expressions,
-            tokens: Vec::new(),
         }),
         Err(e) => Err(e),
     }

@@ -1,5 +1,5 @@
 use crate::{node::EBNFTokenNode, Annotation, EBNFNode, Expression, Grammar, NFNode, RegexExtKind};
-use std::mem;
+use std::{mem, collections::HashSet};
 
 fn to_nf_grammar(input: Grammar<EBNFTokenNode>) -> Grammar<NFNode> {
     let mut expr_vec: Vec<Expression<EBNFTokenNode>> = input.expressions;
@@ -22,7 +22,6 @@ fn to_nf_grammar(input: Grammar<EBNFTokenNode>) -> Grammar<NFNode> {
             .into_iter()
             .map(|n| to_nf_rule(n))
             .collect::<Vec<Expression<NFNode>>>(),
-        tokens: Vec::new(),
     }
 }
 
@@ -48,10 +47,10 @@ fn to_nf_node(node: EBNFTokenNode) -> NFNode {
 }
 
 //performs one step of the ebnf to bnf reduction
-fn expand_rule<'a>(
-    rule: Expression<EBNFTokenNode<'a>>,
+fn expand_rule(
+    rule: Expression<EBNFTokenNode>,
     uniqueifier: &mut i32,
-) -> (Vec<Expression<EBNFTokenNode<'a>>>, bool) {
+) -> (Vec<Expression<EBNFTokenNode>>, bool) {
     let mut any = false;
     let mut new_exprs: Vec<Expression<EBNFTokenNode>> = Vec::new();
     match rule.rhs {
@@ -199,18 +198,18 @@ fn expand_rule<'a>(
 
 #[cfg(test)]
 mod test {
-    use crate::get_grammar;
+    use crate::{get_grammar, token::token_pass};
 
     use super::*;
     use insta::assert_yaml_snapshot;
-    /*
+    
     #[test]
     fn no_change() {
         let source = r"
          A ::= a;
          B ::= b;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -219,7 +218,7 @@ mod test {
          A ::= a;
          A ::= b;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -227,7 +226,7 @@ mod test {
         let source = r"
          A ::= a | b;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -235,7 +234,7 @@ mod test {
         let source = r"
          A ::= a | b | c;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -243,7 +242,7 @@ mod test {
         let source = r"
          A ::= B | C;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -251,7 +250,7 @@ mod test {
         let source = r"
          A ::= (a);
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -259,7 +258,7 @@ mod test {
         let source = r"
          A ::= A B;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -267,7 +266,7 @@ mod test {
         let source = r"
          A ::= A B C;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -275,7 +274,7 @@ mod test {
         let source = r"
          A ::= A+;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -283,7 +282,7 @@ mod test {
         let source = r"
          A ::= A*;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -291,7 +290,7 @@ mod test {
         let source = r"
          A ::= A?;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -299,7 +298,7 @@ mod test {
         let source = r"
          A ::= A B+;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -307,7 +306,7 @@ mod test {
         let source = r"
          A ::= A B C+;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     //
@@ -319,7 +318,7 @@ mod test {
         let source = r"
          A ::= A | (B | c);
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -327,7 +326,7 @@ mod test {
         let source = r"
          A ::= A (B | c);
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -335,7 +334,7 @@ mod test {
         let source = r"
          A ::= A B (B | c);
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -343,7 +342,7 @@ mod test {
         let source = r"
          A ::= B | (C | (D | E));
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -351,7 +350,7 @@ mod test {
         let source = r"
          A ::= B | (C D);
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -359,7 +358,7 @@ mod test {
         let source = r"
          A ::= (B | (C D)) E;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -367,7 +366,7 @@ mod test {
         let source = r"
          A ::= (B | C)*;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -375,7 +374,7 @@ mod test {
         let source = r"
          A ::= (B | C)* D;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -383,7 +382,7 @@ mod test {
         let source = r"
          A ::= (B C)*;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
     #[test]
@@ -391,8 +390,7 @@ mod test {
         let source = r"
          A ::= (B C)+;
      ";
-        let result = to_nf_grammar(get_grammar(source).unwrap());
+        let result = to_nf_grammar(token_pass(&mut get_grammar(source).unwrap()));
         assert_yaml_snapshot!(result)
     }
-    */
 }

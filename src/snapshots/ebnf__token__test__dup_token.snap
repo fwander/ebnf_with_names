@@ -1,0 +1,30 @@
+---
+source: src/token.rs
+expression: result
+---
+expressions:
+  - lhs: filter
+    rhs:
+      Alternation:
+        - NonTerminal:
+            - a
+            - name: ""
+        - NonTerminal:
+            - b
+            - name: ""
+        - name: ""
+  - lhs: a
+    rhs:
+      Terminal:
+        - regex: a
+          annotation:
+            name: ""
+        - name: ""
+  - lhs: b
+    rhs:
+      Terminal:
+        - regex: a
+          annotation:
+            name: ""
+        - name: ""
+

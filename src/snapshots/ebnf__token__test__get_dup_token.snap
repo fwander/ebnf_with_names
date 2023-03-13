@@ -1,0 +1,8 @@
+---
+source: src/token.rs
+expression: result
+---
+- regex: a
+  annotation:
+    name: ""
+

@@ -284,18 +284,6 @@ mod test {
             Number ::= Digits ( K Digits? )?;
             Digits ::= (#'[0-9]+' | 'm') <Digit>;
             SPACE ::= ' ';
-
-            TOK1 -> #'[0-9]+'
-            TOK2 -> 'm'
-
-            K ::= J | L
-
-            abcd[ID] abcdf[ID] if[KEYWORD, ID]
-
-            K => #'\.|,'
-            J ::= ','
-            L ::= '.'
-            .[L, K] ,[J, K] .[L, K]
         ";
 
         let (input, vec) = parse_expressions(src).unwrap();
